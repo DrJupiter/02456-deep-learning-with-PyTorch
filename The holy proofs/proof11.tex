@@ -1,0 +1,145 @@
+
+
+
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{graphicx}
+\usepackage[]{amsmath}
+\usepackage[]{amssymb}
+\usepackage[]{gensymb}
+\usepackage[svgnames]{xcolor}
+
+\newcommand*\rfrac[2]{{}^{#1}\!/_{#2}}
+
+\begin{document}
+
+\flushleft
+
+\section*{Back propogation real stuff - Notation with l-1, and a and z swap}
+
+
+When we calculate the partial derivative $\cfrac{\partial E(w)^{}}{\partial w_{ij}^{(l)}}$
+the end term/stopping point for the chain will be the partial derivatives
+
+\setcounter{equation}{0}
+\begin{align*}
+\cfrac{\partial z_{i}^{(l+1)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial a_{i}^{(l+1)}}{\partial z_{i}^{(l+1)}} = a_{j}^{(l)} \cdot h_{l+1}'(z_{i}^{(l+1)})
+\end{align*}
+
+We then have that \(a_{i}^{(l+1)}\) feeds into/branches out into the next layer of nodes in the equation
+
+\setcounter{equation}{0}
+\begin{align*}
+z_{k}^{(l+2)} = \sum_{\beta=0}^{B} \left(w_{k\beta}^{(l+1)} \cdot a_{\beta}^{(l+1)}\right)
+\end{align*}
+
+and our expression becomes
+
+\setcounter{equation}{0}
+\begin{align*}
+\cfrac{\partial z_{i}^{(l+1)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial a_{i}^{(l+1)}}{\partial z_{i}^{(l+1)}} \cdot \left( \sum_{k=0}^{K} \left(\cfrac{\partial z_{k}^{(l+2)}}{\partial a_{i}^{(l+1)}}\right)\right) = a_{j}^{(l)} \cdot h_{l+1}'(z_{i}^{(l+1)}) \cdot \sum_{k=0}^{K} \left(w_{ki}^{(l+1)}\right)
+\end{align*}
+
+each \(z_{k}^{(l+2)}\) is then fed into \(a_{k}^{(l+2)} = h_{l+2}(z_{k}^{(l+2)})\)
+which in turn leads to
+
+
+\setcounter{equation}{0}
+\begin{align*}
+\cfrac{\partial z_{i}^{(l+1)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial a_{i}^{(l+1)}}{\partial z_{i}^{(l+1)}} \cdot \left( \sum_{k=0}^{K} \left(\cfrac{\partial z_{k}^{(l+2)}}{\partial a_{i}^{(l+1)}} \cdot \cfrac{\partial a_{k}^{(l+2)}}{\partial z_{k}^{(l+2)}}\right)\right)
+= a_{j}^{(l)} \cdot h_{l+1}'(z_{i}^{(l+1)}) \cdot \sum_{k=0}^{K} \left(w_{ki}^{(l+1)}\cfrac{\partial a_{k}^{(l+2)}}{\partial z_{k}^{(l+2)}}\right)\\
+= a_{j}^{(l)} \cdot h_{l+1}'(z_{i}^{(l+1)}) \cdot \sum_{k=0}^{K} \left(w_{ki}^{(l+1)} \cdot h_{l+2}'(z_{k}^{(l+2)})\right)
+\end{align*}
+
+\(a_{k}^{(l+2)}\) is then fed into each node in the next layer where we get 
+
+
+\setcounter{equation}{0}
+\begin{align*}
+	\cfrac{\partial z_{i}^{(l+1)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial a_{i}^{(l+1)}}{\partial z_{i}^{(l+1)}} \cdot \left( \sum_{k=0}^{K} \left(\cfrac{\partial z_{k}^{(l+2)}}{\partial a_{i}^{(l+1)}} \cdot \cfrac{\partial a_{k}^{(l+2)}}{\partial z_{k}^{(l+2)}} \cdot \left( \sum_{q=0}^{Q} \left(\cfrac{\partial z_{q}^{(l+3)}}{\partial a_{k}^{(l+2)}} \cdot \cfrac{\partial a_{q}^{(l+3)}}{\partial z_{q}^{(l+3)}}\right)\right)\right)\right)\\
+= a_{j}^{(l)} \cdot h_{l+1}'(z_{i}^{(l+1)}) \cdot \sum_{k=0}^{K} \left(w_{ki}^{(l+1)} \cdot h_{l+2}'(z_{k}^{(l+2)}) \left(\sum_{q=0}^{Q} \left(w_{qk}^{(l+2)} \cdot h'_{(l+3)}(z_{q}^{(l+3)})\right) \right)\right)
+\end{align*}
+
+\( a_{q}^{(l+3)} \) is then fed into each node in the next layer
+
+and so on and so forth which yields the expression
+
+
+\setcounter{equation}{0}
+\begin{align*}
+\scriptstyle 	\cfrac{\partial z_{i}^{(l+1)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial a_{i}^{(l+1)}}{\partial z_{i}^{(l+1)}} \cdot \left( \sum_{k=0}^{K} \left(\cfrac{\partial z_{k}^{(l+2)}}{\partial a_{i}^{(l+1)}} \cdot \cfrac{\partial a_{k}^{(l+2)}}{\partial z_{k}^{(l+2)}} \cdot \left( \sum_{q=0}^{Q} \left(\cfrac{\partial z_{q}^{(l+3)}}{\partial a_{k}^{(l+2)}} \cdot \cfrac{\partial a_{q}^{(l+3)}}{\partial z_{q}^{(l+3)}} \cdot 
+	\left(\dots \cdot \left( \sum_{c=0}^{D^{(L)}} \cfrac{\partial z_{c}^{L}}{\partial a_{d}^{(L-1)}} \cdot \cfrac{\partial a_{c}^{(L)}}{\partial z_{c}^{(L)}} \cdot \cfrac{\partial E(w)}{\partial a_{c}^{(L)}}   \right) \dots \right) \right)\right)\right)\right)\\
+\scriptstyle = a_{j}^{(l)} \cdot h_{l+1}'(z_{i}^{(l+1)}) \cdot \sum_{k=0}^{K} \left(w_{ki}^{(l+1)} \cdot h_{l+2}'(z_{k}^{(l+2)}) \left(\sum_{q=0}^{Q} \left(w_{qk}^{(l+2)} \cdot h'_{(l+3)}(z_{q}^{(l+3)}) \cdot \left(\dots \left(\sum_{c=0}^{D^{(L)}} w_{cd}^{(L-1)} \cdot h'_{L}(z_{c}^{(L)}) \cdot \cfrac{\partial E(w)}{\partial a_{c}^{(L)}}\right)\dots \right)\right) \right)\right)
+\end{align*}
+
+We can then denote
+
+\setcounter{equation}{0}
+\begin{align*}
+	\delta_{i}^{(l+1)} = \sum_{k=0}^{D^{(l+1)}} \left(w_{ki}^{(l+1)} \cdot h'_{l+2}(z_{k}^{(l+2)}) \cdot \sum_{q=0}^{D^{(l+2)}} \delta_{q}^{(l+2)} \right)~,~
+	l = 0...L-1\\
+\delta_{c}^{(L)} = w_{cq}^{L-1} \cdot h_{L}'(z_{c}^{(L)}) \cdot \cfrac{\partial E(w)}{\partial a_{c}^{(L)}}~,~ l=L
+\end{align*}
+
+and
+
+\setcounter{equation}{0}
+\begin{align*}
+\cfrac{\partial E(w)}{\partial w_{ij}^{(l)}} = a_{j}^{(l)} \cdot h'_{l+1}(z_{i}^{(l+1)}) \cdot \delta_{i}
+\end{align*}
+
+
+
+
+
+\subsection*{Back propogation - Notation not with l-1, but with a and z swap}
+
+
+When we calculate the partial derivative $\cfrac{\partial E(w)^{}}{\partial w_{ij}^{(l)}}$
+the end term/stopping point for the chain will be the partial derivative(s)
+
+\setcounter{equation}{0}
+\begin{align*}
+\cfrac{\partial E(w)}{\partial w_{ij}^{(l)}} = \cfrac{\partial z_{i}^{(l)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial E(w)}{\partial z_{i}^{(l)}} = a_{j}^{(l-1)} \cdot \cfrac{\partial E(w)}{\partial z_{i}^{(l)}} \\
+= \cfrac{\partial z_{i}^{(l)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial a_{i}^{(l)}}{\partial z_{i}^{(l)}} \cdot \cfrac{\partial E(w)}{a_{i}^{(l)}} = a_{j}^{(l-1)} \cdot h_{l}'(z_{i}^{(l)}) \cdot \cfrac{\partial E(w)}{a_{i}^{(l)}} 
+\end{align*}
+
+We then have that \(a_{i}^{(l)}\) feeds into/branches out into the next layer of nodes in the equation
+
+\setcounter{equation}{0}
+\begin{align*}
+z_{k}^{(l+1)} = \sum_{\beta=0}^{B} \left(w_{k\beta}^{(l+1)} \cdot a_{\beta}^{(l)}\right)
+\end{align*}
+
+We now define
+\setcounter{equation}{0}
+\begin{align*}
+	\delta_{i}^{(l)} = \cfrac{\partial E(w)}{\partial z_{i}^{(l)}}, l = 1\dots L \\
+\end{align*}
+
+We expand the expression $\cfrac{\partial E(w)}{\partial z_{i}^{(l)}}$
+\begin{align*}
+	\cfrac{\partial E(w)}{\partial z_{i}^{(l)}} =
+	\cfrac{\partial a_{i}^{(l)}}{\partial z_{i}^{(l)}} \cdot \cfrac{\partial E(w)}{\partial a_{i}^{(l)}} 
+	=  h'_{l}(z_{i}^{(l)}) \cdot \sum_{k=0}^{D^{(l+1)}} \left(\cfrac{\partial z_{k}^{(l+1)}}{\partial a_{i}^{(l)}} \cdot \cfrac{\partial E(w)}{\partial z_{k}^{l+1}}\right) 
+	=  h'_{l}(z_{i}^{(l)}) \cdot \sum_{k=0}^{D^{(l+1)}} \left(w_{ki}^{(l)} \cdot \cfrac{\partial E(w)}{\partial z_{k}^{l+1}}\right) 
+\end{align*}
+
+and by definition $\cfrac{\partial E(w)}{\partial z_{k}^{(l+1)}} = \delta_{k}^{(l+1)}$ and thus
+\setcounter{equation}{0}
+\begin{align*}
+=  h'_{l}(z_{i}^{(l)}) \cdot \sum_{k=0}^{D^{(l+1)}} \left(w_{ki}^{(l)} \cdot \cfrac{\partial E(w)}{\partial z_{k}^{l+1}}\right)  
+=  h'_{l}(z_{i}^{(l)}) \cdot \sum_{k=0}^{D^{(l+1)}} \left(w_{ki}^{(l)} \cdot \delta_{k}^{l+1}\right) = \delta_{i}^{(l)} 
+\end{align*}
+
+and
+
+\setcounter{equation}{0}
+\begin{align*}
+\cfrac{\partial E(w)^{}}{\partial w_{ij}^{(l)}} = \cfrac{\partial z_{i}^{(l)}}{\partial w_{ij}^{(l)}} \cdot \cfrac{\partial E(w) }{\partial z_{i}^{(l)}} = a_{j}^{(l-1)} \cdot \delta_{i}^{(l)}
+\end{align*}
+
+\end{document}
