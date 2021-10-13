@@ -1,0 +1,136 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{graphicx}
+\usepackage[]{amsmath}
+\usepackage[]{gensymb}
+\usepackage[]{amssymb}
+\usepackage[]{amsthm}
+\usepackage[svgnames]{xcolor}
+\usepackage{xfrac}
+\usepackage{float}
+\usepackage{hyperref}
+
+
+\let\oldcolorbox\colorbox%
+\renewcommand{\colorbox}[2]{\oldcolorbox{#1}{\parbox{\textwidth}{#2}}}
+
+\setlength{\parindent}{0em}
+
+\begin{document}
+
+Our data follows distribution \(P_{gt}(X)\) and we wish to learn \(P(X)\) such that they are as close to each other os possible.
+\\ \vspace{0.3cm}
+
+\subsection{Common 3 drawbacks with classical approaches}
+
+\begin{enumerate}
+\item Strong assumptions about the structure of the data
+\item Severe approximations, which often leads to sub optimal models
+\item Often rely on computationally expensive techniques/inferences such as Markov Chain Monte Carlo
+\end{enumerate}
+
+\subsection{Latent Variable models}
+
+\subsubsection{Latent variable}
+
+A latent variable is a data representation, which helps the model decide what feature to model/output.
+We call it latent, because we don't know which features of the latent variable decided which feature should be modeled.
+
+
+\subsubsection{Function space: Deterministic \& Non-deterministic (probabilistic)}
+
+We want to unsure that in the latent representation of X (the data set), there is at least one feature given \(x \in X\) s.t we can reconstruct something very similar to X. 
+\\ \vspace{0.3cm}
+
+We denote the latent space \(\mathcal{Z}\) where we sample \(z\) from it given some density function \(P(z), z \in \mathcal{Z}\).
+We let a family of deterministic function \(f: \mathcal{Z} \times \Theta \rightarrow \mathcal{X} \), where for a particular one we have \(f(z;\theta), \theta \in \Theta\). 
+\\ \vspace{0.3cm}
+
+We want to optimize over \(\theta \in \Theta\) s.t we can with high probability sample \(z\) from \(P(z)\) and have \(f(z;\theta)\) with high probability be within out dataset.
+\\ \vspace{0.3cm}
+
+\underline{Thought:}
+So having an encoder network is like artificially sampling from this distribution, and then we want the encoder network to transform are original data distribution to a distribution we know how to work with. 
+So the encoder network takes \(X\) with distribution \(P_{gt}(X)\) and wishes to transform X s.t \(X \sim P(X)\) where P is a distribution we know how to handle.
+\\ \vspace{0.3cm}
+
+In probabilistic notation, what we are attempting is optimizing for maximum likelihood 
+
+\setcounter{equation}{0}
+\begin{align*}
+P(X) = \int_{}^{} P(X|z;\theta) \cdot P(z) ~ dz
+\end{align*}
+
+\(P(X|z;\theta)\sim f(z;\theta)\) and \(z \sim \text{encoder}\).
+\\ \vspace{0.3cm}
+
+In VAE \(P(X|z;\theta)\) is often \(\mathcal{N}(X|f(z;\theta), \sigma^{2} \cdot I)\), where I is the identity matrix and \(\sigma\) is a hyper parameter, which can thus be optimized.
+\\ \vspace{0.3cm}
+
+It is important the \(f(z;\theta)\) not become a Dirac delta function\footnote{\url{https://en.wikipedia.org/wiki/Dirac_delta_function}} - one where only one output is possible, such as \(f =\) identity function.\\
+\\ \vspace{0.3cm}
+
+\subsubsection{VAE's handle on the problem}
+
+Let the encoder result in z following a simple distribution fx \(\mathcal{N}(0,I)\).
+The reason for thus is that d normally distributed variables can be transformed to follow any distribution. \emph{In reality this holds for any function which maps to the entirity of the space which you want to apply a function to, but it might just require less work to derive some useful distributions from \(\mathcal{N}\) and thus making it a good choice for a function for z to be distributed by.}\footnote{Thus in reality the encoder in a VAE just becomes complex batchnormalization. But I tested using just regular BN and it didn't seem to work as well.}
+\\ \vspace{0.3cm}
+
+Often f is a multilayered NN, since NN are good function approximaters.
+\\ \vspace{0.3cm}
+
+\subsubsection{Approximating \(P(X)\)}
+
+We have \(P(X) \approx \frac{1}{n} \sum_{k=1}^{n} \left(P(X|z_{k})\right)\), however depending on the dimensionality of our data space we might need n to be extremely large.
+We might also have that digits which are off don't seem to differ from those which are close or slightly off when put through P and thus we seek another solution for approximating P(X).
+\\ \vspace{0.3cm}
+
+In the sum we have that most z will have little impact on the sum, since most will be close to 0.
+In VAE we seek to sample the z, which have a meaningful contribution when approximating \(P(X)\) and use them to compute \(P(X)\).
+We thus want to sample z from a function \(Q(z|X)\) and pick those z most likely.
+\\ \vspace{0.3cm}
+
+Vi kan gøre dette ud fra Kullback-Leibler Divergencen (KL divergence or $\mathcal{D}$), som er den forventede værdi af den logaritmiske difference mellem to stokastiske variable.
+\\ \vspace{0.3cm}
+
+Så 
+\setcounter{equation}{0}
+\begin{align*}
+&D[Q(z)| P(z|X)] = \mathbb{E}_{z \sim Q} [\log(Q(z)) - \log(P(z|X))]\\
+&\log(P(z|X)) = \log(\cfrac{P(X|z) \cdot P(z)}{P(X)}) = \log(P(X|z)) + \log(P(z)) - \log(P(X))\\
+\implies & D[Q(z)| P(z|X)] = \mathbb{E}_{z \sim Q} [\log(Q(z)) - \log(P(X|z)) - \log(P(z)) + \log(P(X))]\\
+&\mathbb{E}[A + B] = \mathbb{E}[A] + \mathbb{E}[B]\\
+\implies & D[Q(z)| P(z|X)] = \mathbb{E}_{z \sim Q} [\log(Q(z)) - \log(P(X|z)) - \log(P(z)) ] + \mathbb{E}_{z \sim Q}[\log(P(X))]\\
+&\text{Since X is independent of z }\\
+\implies & \mathbb{E}_{z \sim Q}[\log(P(X))] = \log(P(X))\\
+\implies & D[Q(z)| P(z|X)] = \mathbb{E}_{z \sim Q} [\log(Q(z)) - \log(P(X|z)) - \log(P(z)) ] + \log(P(X))\\
+& -1 \cdot, move, a \cdot \mathbb{E}[A] = \mathbb{E}[a \cdot A] ~\\
+\implies & \log(P(X))- D[Q(z)| P(z|X)] = \mathbb{E}_{z \sim Q} [-\log(Q(z)) + \log(P(X|z)) + \log(P(z)) ] \\
+&-D[Q(z)|P(z)] = \mathbb{E}_{z \sim Q}[\log(P(z)) - \log(Q(z))]\\
+\implies & \log(P(X))- D[Q(z)| P(z|X)] = \mathbb{E}_{z \sim Q} [\log(P(X|z))] - D[Q(z)|P(z)] \\
+\end{align*}
+
+Givet tilfældet, hvor Q afhænger af \(X\) har vi så
+
+\setcounter{equation}{0}
+\begin{align*}
+\log(P(X))- D[Q(z|X)| P(z|X)] = \mathbb{E}_{z \sim Q} [\log(P(X|z))] - D[Q(z|X)|P(z)]\\
+\end{align*}
+
+\emph{Here, semantically we will have Q be the encoder and P be the decoder.}
+We now want to maximize \(\log(P(X))\) and minimize the \(\mathcal{D}\) term on the LHS.
+We can achieve thus by applying gradient descent to the RHS, but first we must know to calculate each term. 
+Given \(Q,P\) follow some Gaussian distribution we can calculate \(\mathcal{D[Q(z|X)|P(z)]}\) as
+
+\setcounter{equation}{0}
+\begin{align*}
+D[\mathcal{N}(u_{0},\Sigma_{0})|\mathcal{N}(u_{1},\Sigma_{1})] = 
+\frac{1}{2} \cdot \left(tr(\Sigma_{1}^{-1} \cdot \Sigma_{0}) + (u_{1}-u_{0})^{T} \cdot \Sigma_{1}^{-1} \cdot (u_{1}- u_{0}) - k + \log\left(\cfrac{det (\Sigma_{1})}{det(\Sigma_{0})}\right)\right)
+\end{align*}
+
+Where tr is the trace, so the sum of the diagonal elements in a square matrix.
+
+\end{document}
