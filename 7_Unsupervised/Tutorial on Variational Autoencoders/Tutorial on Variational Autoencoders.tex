@@ -123,7 +123,7 @@ Givet tilfældet, hvor Q afhænger af \(X\) har vi så
 \emph{Here, semantically we will have Q be the encoder and P be the decoder.}
 We now want to maximize \(\log(P(X))\) and minimize the \(\mathcal{D}\) term on the LHS.
 We can achieve thus by applying gradient descent to the RHS, but first we must know to calculate each term. 
-Given \(Q,P\) follow some Gaussian distribution we can calculate \(\mathcal{D[Q(z|X)|P(z)]}\) as
+Given \(Q,P\) follow some Gaussian distribution we can calculate \(\mathcal{D}[Q(z|X)|P(z)]\) as
 
 \setcounter{equation}{0}
 \begin{align*}
@@ -132,5 +132,28 @@ D[\mathcal{N}(u_{0},\Sigma_{0})|\mathcal{N}(u_{1},\Sigma_{1})] =
 \end{align*}
 
 Where tr is the trace, so the sum of the diagonal elements in a square matrix.
+\(k\) is the dimensionality of the distribution.
+\\ \vspace{0.3cm}
+
+In the case where \(Q(z|X) = \mathcal{N}(\mu(X),\Sigma(X)), P(z) = \mathcal{N}(0,I)\), then the expression simplifies to
+
+\setcounter{equation}{0}
+\begin{align*}
+D[\mathcal{N}(u(X),\Sigma(X))|\mathcal{N}(0,I)] = 
+\frac{1}{2} \cdot (tr(\Sigma(X)) + (u(X))^{T} \cdot (u(X)) - k + \log\left(det(\Sigma(X)))\right)
+\end{align*}
+
+\(\mathbb{E}_{z\sim Q}(\log(P(X|z)))\) can be approximated by passing different z through f multiple times, however in practice this is just done once and an estimate for the expectation simply becomes \(\log(P(X|z))\).
+
+\begin{center}
+\includegraphics[scale=0.7]{./img/vae.png}
+\end{center}
+
+In order to get around being unable to compute the gradient of a stochastic function in the middle of the network, we instead let the sample be \(z = \mu(X) + \Sigma(X) \cdot \epsilon, \epsilon \sim \mathcal{N}(0,I)\).\footnote{Which makes sense when z is modeling a normal distribution.}
+This trick is called reparameterization and can be used when Q is continuous. 
+\\ \vspace{0.3cm}
+
+
+
 
 \end{document}

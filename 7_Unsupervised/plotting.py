@@ -97,7 +97,7 @@ def plot_autoencoder_stats(
 
 
 def plot_samples(ax, x):
-    x = x.to('cpu')
+    #x = x.to('cpu')
     nrow = int(np.sqrt(x.size(0)))
     x_grid = make_grid(x.view(-1, 1, 28, 28), nrow=nrow).permute(1, 2, 0)
     ax.imshow(x_grid)
@@ -116,7 +116,8 @@ def plot_interpolations(ax, vae):
     zs = t[None, :, None] * z[:, 0, None, :] + (1 - t[None, :, None]) * z[:, 1, None, :]
     px = vae.observation_model(zs.view(nrow * nsteps, -1))
     x = px.sample()
-    x = x.to('cpu')
+    x = x.detach().clone().cpu()
+    #x = x.to('cpu')
     x_grid = make_grid(x.view(-1, 1, 28, 28), nrow=nrow).permute(1, 2, 0)
     ax.imshow(x_grid)
     ax.axis('off')
@@ -130,15 +131,18 @@ def plot_grid(ax, vae):
     zs = zs.to(device)
     px = vae.observation_model(zs.view(nrow * nrow, 2))
     x = px.sample()
-    x = x.to('cpu')
+    x = x.detach().clone().cpu()
+    #x = x.to('cpu')
     x_grid = make_grid(x.view(-1, 1, 28, 28), nrow=nrow).permute(1, 2, 0)
     ax.imshow(x_grid)
     ax.axis('off')
 
 
 def plot_2d_latents(ax, qz, z, y):
-    z = z.to('cpu')
-    y = y.to('cpu')
+    #z = z.to('cpu')
+    #y = y.to('cpu')
+    z = z.detach().clone().cpu()
+    y = y.detach().clone().cpu()
     scale_factor = 2
     batch_size = z.shape[0]
     palette = sns.color_palette()
@@ -149,7 +153,10 @@ def plot_2d_latents(ax, qz, z, y):
     ax.add_artist(prior)
 
     # plot data points
-    mus, sigmas = qz.mu.to('cpu'), qz.sigma.to('cpu')
+    #mus, sigmas = qz.mu.to('cpu'), qz.sigma.to('cpu')
+    mus, sigmas = qz.mu.detach().clone().cpu(),  qz.sigma.detach().clone().cpu()
+
+    #mus, sigmas = qz.mu, qz.sigma
     mus = [mus[i].numpy().tolist() for i in range(batch_size)]
     sigmas = [sigmas[i].numpy().tolist() for i in range(batch_size)]
 
@@ -167,7 +174,7 @@ def plot_2d_latents(ax, qz, z, y):
 
 
 def plot_latents(ax, z, y):
-    z = z.to('cpu')
+    #z = z.to('cpu')
     palette = sns.color_palette()
     colors = [palette[l] for l in y]
     z = TSNE(n_components=2).fit_transform(z)
@@ -176,10 +183,10 @@ def plot_latents(ax, z, y):
 
 def make_vae_plots(vae, x, y, outputs, training_data, validation_data, tmp_img="tmp_vae_out.png", figsize=(18, 18)):
     fig, axes = plt.subplots(3, 3, figsize=figsize, squeeze=False)
-
+    
     # plot the observation
     axes[0, 0].set_title(r'Observation $\mathbf{x}$')
-    plot_samples(axes[0, 0], x)
+    plot_samples(axes[0, 0], x.detach().clone().cpu())
 
     # plot the latent samples
     try:
@@ -199,8 +206,10 @@ def make_vae_plots(vae, x, y, outputs, training_data, validation_data, tmp_img="
     axes[0, 2].set_title(
         r'Reconstruction $\mathbf{x} \sim p_\theta(\mathbf{x} | \mathbf{z}), \mathbf{z} \sim q_\phi(\mathbf{z} | \mathbf{x})$')
     px = outputs['px']
-    x_sample = px.sample().to('cpu')
-    plot_samples(axes[0, 2], x_sample)
+    x_sample = px.sample()
+   
+    x_sample = x_sample.detach().clone().cpu()
+    plot_samples(axes[0, 2], x_sample.detach().clone().cpu())
 
     # plot ELBO
     ax = axes[1, 0]
@@ -227,6 +236,7 @@ def make_vae_plots(vae, x, y, outputs, training_data, validation_data, tmp_img="
     axes[2, 0].set_title(r'Samples $\mathbf{x} \sim p_\theta(\mathbf{x} | \mathbf{z}), \mathbf{z} \sim p(\mathbf{z})$')
     px = vae.sample_from_prior(batch_size=x.size(0))['px']
     x_samples = px.sample()
+    x_samples = x_samples.detach().clone().cpu()
     plot_samples(axes[2, 0], x_samples)
 
     # plot interpolations samples
@@ -240,6 +250,7 @@ def make_vae_plots(vae, x, y, outputs, training_data, validation_data, tmp_img="
             r'Samples: $\mathbf{x} \sim p_\theta(\mathbf{x} | \mathbf{z}), \mathbf{z} \sim \operatorname{grid}(-3:3, -3:3)$')
         px = vae.sample_from_prior(batch_size=x.size(0))['px']
         x_samples = px.sample()
+        x_samples = x_samples.detach().clone().cpu()
         plot_grid(axes[2, 2], vae)
 
     # display
